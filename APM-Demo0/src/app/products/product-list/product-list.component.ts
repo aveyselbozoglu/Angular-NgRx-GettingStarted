@@ -1,11 +1,11 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Store } from '@ngrx/store';
 
-import { Subscription } from 'rxjs';
+import { Observable, Subscription } from 'rxjs';
 
 import { Product } from '../product';
 import { ProductService } from '../product.service';
-import { getShowProductCode, getCurrentProduct,getProducts, State } from '../state/product.reducer';
+import { getShowProductCode, getCurrentProduct, getProducts, State, getError } from '../state/product.reducer';
 import * as ProductActions from '../state/product.action';
 
 @Component({
@@ -15,11 +15,11 @@ import * as ProductActions from '../state/product.action';
 })
 export class ProductListComponent implements OnInit, OnDestroy {
   pageTitle = 'Products';
-  errorMessage: string;
+  errorMessage$: Observable<string>;
 
   displayCode: boolean;
 
-  products: Product[];
+  products$: Observable<Product[]>;
 
   // Used to highlight the selected product in the list
   selectedProduct: Product | null;
@@ -28,23 +28,16 @@ export class ProductListComponent implements OnInit, OnDestroy {
   constructor(private productService: ProductService, private store: Store<State>) { }
 
   ngOnInit(): void {
-    // this.sub = this.productService.selectedProductChanges$.subscribe(
-    //   currentProduct => this.selectedProduct = currentProduct
-    // );
 
     this.store.select(getCurrentProduct).subscribe(
       currentProduct => this.selectedProduct = currentProduct
     )
 
-    // this.productService.getProducts().subscribe({
-    //   next: (products: Product[]) => this.products = products,
-    //   error: err => this.errorMessage = err
-    // });
+    this.store.dispatch(ProductActions.loadProducts());
 
-    this.productService.getProducts().subscribe({
-      next: (products: Product[]) => this.products = products,
-      error: err => this.errorMessage = err
-    });
+    this.errorMessage$ = this.store.select(getError)
+
+    this.products$ = this.store.select(getProducts);
 
     this.store.select(getShowProductCode).subscribe(
       showProductCode => this.displayCode = showProductCode

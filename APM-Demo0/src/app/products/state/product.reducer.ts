@@ -3,6 +3,7 @@ import { Product } from "../product";
 import * as AppState from '../../state/app.state'
 
 import * as ProductAction from '../state/product.action'
+import { act } from "@ngrx/effects";
 
 
 export interface State extends AppState.State {
@@ -13,21 +14,25 @@ export interface ProductState {
   showProductCode: boolean
   currentProduct: Product
   products: Product[]
+  error: string
 }
 
 const initialState: ProductState = {
   showProductCode: true,
   currentProduct: null,
-  products: []
+  products: [],
+  error: ''
 }
 
 const getProductFeatureState = createFeatureSelector<ProductState>('products')
 
 export const getShowProductCode = createSelector(getProductFeatureState, state => state.showProductCode)
 
+export const getCurrentProduct = createSelector(getProductFeatureState, state => state.currentProduct)
+
 export const getProducts = createSelector(getProductFeatureState, state => state.products)
 
-export const getCurrentProduct = createSelector(getProductFeatureState, state => state.currentProduct)
+export const getError = createSelector(getProductFeatureState, state => state.error)
 
 export const productReducer = createReducer<ProductState>(
   initialState,
@@ -60,5 +65,19 @@ export const productReducer = createReducer<ProductState>(
         starRating: 3
       }
     }
-  }
-  ))
+  }),
+  on(ProductAction.loadProductsSuccess, (state, action): ProductState => {
+    return {
+      ...state,
+      products: action.products,
+      error: ''
+    }
+  }),
+  on(ProductAction.loadProductsFail, (state, action): ProductState => {
+    return {
+      ...state,
+      products: [],
+      error: action.error
+    }
+  })
+);
